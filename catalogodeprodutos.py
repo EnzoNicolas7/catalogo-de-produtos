@@ -1,8 +1,65 @@
 import tkinter as tk
 from tkinter import ttk
 import mysql.connector
+from dotenv import load_dotenv
+import os
 
-def criar_input(telae, nome):
+load_dotenv()
+
+class tela_principal:
+    def __init__(self, tela):
+        self.tela = tela
+        self.tela.title(f'{self.tela}')
+        self.tela.geometry('560x227')
+    def tabela(self):
+        table_dt = dados_tabela()
+        qtd_linhas = table_dt["qtd_linhas"]
+        linhas = table_dt["linhas"]
+        tabela = ttk.Treeview(tela)
+        tabela['columns'] = table_dt["colunas"]
+        tabela.column('#0', width=0, stretch=tk.NO)
+        tabela.heading('#0', text='', anchor=tk.W)
+        for c in tabela["columns"]:
+        
+            tabela.column(c, anchor=tk.W, width=150)
+            tabela.heading(c, text=c, anchor=tk.W)
+
+        for i in range(qtd_linhas):
+            if i % 2 == 0:
+                tabela.insert(parent='', index=i, values=linhas[i], tags=('evenrow',))
+            else:
+                tabela.insert(parent='', index=i, values=linhas[i], tags=('oddrow',))
+
+
+        tabela.pack(side="left")
+    def botões(self):
+
+        funcoes = {"adicionar": adicionar,
+                   "deletar": deletar,
+                    "editar": editar,
+                    "pesquisar": pesquisar}
+        botoes = ["adicionar","deletar","editar","pesquisar"]
+        for botao in botoes:
+            add_btn = tk.Button(self.tela, text=botao, command=funcoes[botao])
+            add_btn.pack(side="top")
+
+        def adicionar():
+            ...
+        def deletar():
+            ...
+        def editar():
+            ...
+        def pesquisar():
+            ...
+    
+ 
+
+            
+        
+class tela_add():
+    def __init__():
+            ...
+    def criar_input(telae, nome):
         linha = tk.Frame(telae)
         linha.pack(pady=5)
         label = tk.Label(linha, text=nome, fg="black")
@@ -11,98 +68,30 @@ def criar_input(telae, nome):
         input.pack(side="left")
         return input
 
-def add_produto():
-    def save():
-        lista = [id_atual]
-        for caixa in caixas:
-            lista.append(caixa.get())
-        print(f"lista: {lista}")
-        
-        itens = tuple(lista)
-        colunassema = ", ".join(colunas)
-        
-        
-        cmd = f"INSERT INTO new_table ({colunassema}) VALUES {itens};"
-        print(cmd)
-        print(f"\033[1;31;43mitens: {itens}\033[m")
-        db = mysql.connector.connect(host="localhost", user="root", password="Japaa2222", database="new_schema")
-        cursor = db.cursor()
 
-        
-        cursor.execute(cmd)
-        db.commit()
-        cursor.close()
-        db.close()
-        tela_add.destroy()
-        
-        #atualizar tabela e fechar janela
+
+def dados_tabela():
+    db = mysql.connector.connect(host=os.getenv("HOST"), user=os.getenv("USER"), password=os.getenv("PASSWORD"), database=os.getenv("DATABASE"))
+    cursor = db.cursor()
+    query = ("SELECT * FROM new_schema.new_table"
+                     "")
     
-    tela_add = tk.Toplevel()
-    tela.title('adicionar produto')
-    id_atual = linhas+1
-    caixas = []
-    for c in colunas[1:]:
-        caixa = criar_input(tela_add, c)
-        caixas.append(caixa)
+    cursor.execute(query)
+    results = cursor.fetchall()
 
-    salvar = tk.Button(tela_add, text="confirmar", command=save)
-    salvar.pack(side="left")
-    cancelar = tk.Button(tela_add, text="cancelar")
-    cancelar.pack(side="left")
- 
-def atualizar_tabela():
-    
-    table = ttk.Treeview(tela)
-    
-    table['columns'] = colunas
-    table.column('#0', width=0, stretch=tk.NO)
-    table.heading('#0', text='', anchor=tk.W)
-    for c in table["columns"]:
-        
-        table.column(c, anchor=tk.W, width=150)
-        table.heading(c, text=c, anchor=tk.W)
-
-    for i in range(linhas):
-        if i % 2 == 0:
-            table.insert(parent='', index=i, values=results[i], tags=('evenrow',))
-        else:
-            table.insert(parent='', index=i, values=results[i], tags=('oddrow',))
+    colunas = cursor.column_names
+    qtd_colunas = len(colunas)
+    qtd_linhas = len(results)
+    dados_tabela = {"colunas": colunas,
+                    "qtd_colunas": qtd_colunas,
+                    "qtd_linhas": qtd_linhas,
+                    "linhas": results}
+    cursor.close()
+    return dados_tabela
 
 
-    table.pack(side="left")
-
-    
-
-#pegando dados da tabela mysql
-db = mysql.connector.connect(host="localhost", user="root", password="Japaa2222", database="new_schema")
-cursor = db.cursor()
-
-query = ("SELECT * FROM new_schema.new_table"
-         "")
-cursor.execute(query)
-
-results = cursor.fetchall()
-colunas = cursor.column_names
-cursor.close()
-
-qtd_colunas = len(colunas)
-
-
-linhas = len(results)
-
-
-print(f"colunas: {colunas} quantidade de colunas: {qtd_colunas} linhas: {linhas}\n dados da tabela: {results}")
-
-# criando tela inicial
 tela = tk.Tk()
-tela.title('Catalogo de Produtos')
-tela.geometry('560x227')
-atualizar_tabela()
-
-add_btn = tk.Button(tela, text="adicionar produto", command=add_produto)
-add_btn.pack(side="top")
+tela_principal.tabela(tela)
 tela.mainloop()
-
-
 
 
